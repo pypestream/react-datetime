@@ -47,7 +47,7 @@ var DateTimePickerTime = createClass({
 		};
 	},
 
-	renderCounter: function( type ) {
+	renderCounter: function( type, locale ) {
 		if ( type !== 'daypart' ) {
 			var value = this.state[ type ];
 			if ( type === 'hours' && this.props.timeFormat.toLowerCase().indexOf( ' a' ) !== -1 ) {
@@ -57,10 +57,20 @@ var DateTimePickerTime = createClass({
 					value = 12;
 				}
 			}
+
+			var label = '';
+			if ( type === 'hours' ) {
+				label = locale._relativeTime.h;
+			} else if ( type === 'minutes' ) {
+				label = locale._relativeTime.m;
+			} else if ( type === 'seconds' ) {
+				label = locale._relativeTime.s;
+			}
+
 			return React.createElement('div', { key: type, className: 'rdtCounter' }, [
-				React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'increase', type ), onContextMenu: this.disableContextMenu }, '▲' ),
-				React.createElement('div', { key: 'c', className: 'rdtCount' }, value ),
-				React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'decrease', type ), onContextMenu: this.disableContextMenu }, '▼' )
+				React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'increase', type ), onContextMenu: this.disableContextMenu, 'aria-label' : label + ' +', role: 'button', 'aria-hidden': 'true' }, '▲' ),
+				React.createElement('div', { key: 'c', className: 'rdtCount', tabIndex: '0', onKeyDown: this.onStartPressing( type), onContextMenu: this.disableContextMenu, 'aria-label' : label, role: 'spinbutton', 'aria-valuenow': value, 'aria-valuemax': '12', 'aria-valuemin': '1' }, value ),
+				React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'decrease', type ), onContextMenu: this.disableContextMenu, 'aria-label' : label + ' -', role: 'button', 'aria-hidden': 'true' }, '▼' )
 			]);
 		}
 		return '';
@@ -68,21 +78,22 @@ var DateTimePickerTime = createClass({
 
 	renderDayPart: function() {
 		return React.createElement('div', { key: 'dayPart', className: 'rdtCounter' }, [
-			React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu }, '▲' ),
-			React.createElement('div', { key: this.state.daypart, className: 'rdtCount' }, this.state.daypart ),
-			React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu }, '▼' )
+			React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu, 'aria-label' : this.state.daypart + ' +', role: 'button', 'aria-hidden': 'true' }, '▲' ),
+			React.createElement('div', { key: 'c', className: 'rdtCount', tabIndex: '0', onKeyDown: this.onStartDayPartPressing(), onContextMenu: this.disableContextMenu, 'aria-label' : this.state.daypart, role: 'spinbutton', 'aria-valuenow': this.state.daypart }, this.state.daypart ),
+			React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu, 'aria-label' : this.state.daypart + ' -', role: 'button', 'aria-hidden': 'true' }, '▼' )
 		]);
 	},
 
 	render: function() {
 		var me = this,
-			counters = []
-		;
+			counters = [],
+			date = this.props.viewDate,
+			locale = date.localeData();
 
 		this.state.counters.forEach( function( c ) {
 			if ( counters.length )
 				counters.push( React.createElement('div', { key: 'sep' + counters.length, className: 'rdtCounterSeparator' }, ':' ) );
-			counters.push( me.renderCounter( c ) );
+			counters.push( me.renderCounter( c, locale ) );
 		});
 
 		if ( this.state.daypart !== false ) {
@@ -102,7 +113,7 @@ var DateTimePickerTime = createClass({
 			React.createElement('table', {}, [
 				this.renderHeader(),
 				React.createElement('tbody', { key: 'b'}, React.createElement('tr', {}, React.createElement('td', {},
-					React.createElement('div', { className: 'rdtCounters' }, counters )
+					React.createElement('div', { className: 'rdtCounters', role: 'alert', 'aria-atomic': 'true' }, counters )
 				)))
 			])
 		);
@@ -185,6 +196,55 @@ var DateTimePickerTime = createClass({
 
 			document.body.addEventListener( 'mouseup', me.mouseUpListener );
 			document.body.addEventListener( 'touchend', me.mouseUpListener );
+		};
+	},
+
+	onStartDayPartPressing:  function() {
+		var me = this;
+
+		return function(event) {
+			var key = event.key;
+			var action = null;
+			var type = 'hours';
+
+			if (key === 'ArrowDown' || key === 'ArrowUp' || key === 'ArrowRight' || key === 'ArrowLeft') {
+				action = 'toggleDayPart';
+			}
+
+			if (action) {
+				event.preventDefault();
+				var update = {};
+				update[type] = me[action](type);
+
+				me.setState(update, function () {
+					me.props.setTime(type, me.state[type]);
+				});
+
+			}
+		};
+	},
+
+	onStartPressing: function( type ) {
+		var me = this;
+
+		return function(event) {
+			var key = event.key;
+			var action = null;
+
+			if (key === 'ArrowDown' || key === 'ArrowLeft') {
+				action = 'decrease';
+			} else if (key === 'ArrowUp' || key === 'ArrowRight') {
+				action = 'increase';
+			}
+
+			if (action) {
+				event.preventDefault();
+				var update = {};
+				update[type] = me[action](type);
+				me.setState(update, function() {
+					me.props.setTime(type, me.state[type]);
+				});
+			}
 		};
 	},
 
