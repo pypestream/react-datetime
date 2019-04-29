@@ -47,7 +47,7 @@ var DateTimePickerTime = createClass({
 		};
 	},
 
-	renderCounter: function( type, locale ) {
+	renderCounter: function( type ) {
 		if ( type !== 'daypart' ) {
 			var value = this.state[ type ];
 			if ( type === 'hours' && this.props.timeFormat.toLowerCase().indexOf( ' a' ) !== -1 ) {
@@ -60,40 +60,40 @@ var DateTimePickerTime = createClass({
 
 			var label = '';
 			if ( type === 'hours' ) {
-				label = locale._relativeTime.h;
+				label = 'Hour';
 			} else if ( type === 'minutes' ) {
-				label = locale._relativeTime.m;
+				label = 'Minute';
 			} else if ( type === 'seconds' ) {
-				label = locale._relativeTime.s;
+				label = 'Second';
 			}
 
 			return React.createElement('div', { key: type, className: 'rdtCounter' }, [
-				React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'increase', type ), onContextMenu: this.disableContextMenu, 'aria-label' : label + ' +', role: 'button', 'aria-hidden': 'true' }, '▲' ),
+				React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'increase', type ), onContextMenu: this.disableContextMenu, 'aria-label' : 'Increase ' + label, role: 'button', 'aria-hidden': 'true' }, '▲' ),
 				React.createElement('div', { key: 'c', className: 'rdtCount', tabIndex: '0', onKeyDown: this.onStartPressing( type), onContextMenu: this.disableContextMenu, 'aria-label' : label, role: 'spinbutton', 'aria-valuenow': value, 'aria-valuemax': '12', 'aria-valuemin': '1' }, value ),
-				React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'decrease', type ), onContextMenu: this.disableContextMenu, 'aria-label' : label + ' -', role: 'button', 'aria-hidden': 'true' }, '▼' )
+				React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'decrease', type ), onContextMenu: this.disableContextMenu, 'aria-label' : 'Decrease ' + label, role: 'button', 'aria-hidden': 'true' }, '▼' )
 			]);
 		}
 		return '';
 	},
 
 	renderDayPart: function() {
+		var label = (this.state.daypart && this.state.daypart.toLowerCase() === 'am') ? ' AM' : ' PM';
+
 		return React.createElement('div', { key: 'dayPart', className: 'rdtCounter' }, [
-			React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu, 'aria-label' : this.state.daypart + ' +', role: 'button', 'aria-hidden': 'true' }, '▲' ),
+			React.createElement('span', { key: 'up', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu, 'aria-label' : 'Change to'+ label, role: 'button', 'aria-hidden': 'true' }, '▲' ),
 			React.createElement('div', { key: 'c', className: 'rdtCount', tabIndex: '0', onKeyDown: this.onStartDayPartPressing(), onContextMenu: this.disableContextMenu, 'aria-label' : this.state.daypart, role: 'spinbutton', 'aria-valuenow': this.state.daypart }, this.state.daypart ),
-			React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu, 'aria-label' : this.state.daypart + ' -', role: 'button', 'aria-hidden': 'true' }, '▼' )
+			React.createElement('span', { key: 'do', className: 'rdtBtn', onMouseDown: this.onStartClicking( 'toggleDayPart', 'hours'), onContextMenu: this.disableContextMenu, 'aria-label' : 'Change to'+ label, role: 'button', 'aria-hidden': 'true' }, '▼' )
 		]);
 	},
 
 	render: function() {
 		var me = this,
-			counters = [],
-			date = this.props.viewDate,
-			locale = date.localeData();
+			counters = [];
 
 		this.state.counters.forEach( function( c ) {
 			if ( counters.length )
 				counters.push( React.createElement('div', { key: 'sep' + counters.length, className: 'rdtCounterSeparator' }, ':' ) );
-			counters.push( me.renderCounter( c, locale ) );
+			counters.push( me.renderCounter( c ) );
 		});
 
 		if ( this.state.daypart !== false ) {
