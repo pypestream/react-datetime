@@ -2,7 +2,8 @@
 
 var React = require('react'),
 	createClass = require('create-react-class'),
-	assign = require('object-assign')
+	assign = require('object-assign'),
+	CATCHING_KEYS = require('./CatchingKeys')
 	;
 
 var DateTimePickerTime = createClass({
@@ -207,7 +208,7 @@ var DateTimePickerTime = createClass({
 			var action = null;
 			var type = 'hours';
 
-			if (key === 'ArrowDown' || key === 'ArrowUp' || key === 'ArrowRight' || key === 'ArrowLeft') {
+			if (key === CATCHING_KEYS.ArrowDown || key === CATCHING_KEYS.ArrowUp || key === CATCHING_KEYS.ArrowRight || key === CATCHING_KEYS.ArrowLeft) {
 				action = 'toggleDayPart';
 			}
 
@@ -231,9 +232,9 @@ var DateTimePickerTime = createClass({
 			var key = event.key;
 			var action = null;
 
-			if (key === 'ArrowDown' || key === 'ArrowLeft') {
+			if (key ===  CATCHING_KEYS.ArrowDown || key === CATCHING_KEYS.ArrowLeft) {
 				action = 'decrease';
-			} else if (key === 'ArrowUp' || key === 'ArrowRight') {
+			} else if (key === CATCHING_KEYS.ArrowUp || key === CATCHING_KEYS.ArrowRight) {
 				action = 'increase';
 			}
 
